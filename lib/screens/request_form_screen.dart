@@ -134,7 +134,9 @@ class _RequestFormScreenState extends State<RequestFormScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final urls = await StorageService().uploadMultipleFiles(_documents);
+      final urls = await LocalStorageService().saveMultipleFilesLocally(
+        _documents,
+      );
 
       final request = AdmissionRequest(
         userId: FirebaseAuth.instance.currentUser!.uid,

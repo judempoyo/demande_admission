@@ -1,31 +1,30 @@
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
-class StorageService {
-  final FirebaseStorage _storage = FirebaseStorage.instance;
-
-  Future<String> uploadFile(File file) async {
-    try {
-      final fileName =
-          'documents/${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
-      final ref = _storage.ref().child(fileName);
-      await ref.putFile(file);
-      return await ref.getDownloadURL();
-    } catch (e) {
-      throw 'Erreur lors de l\'upload: ${e.toString()}';
-    }
+class LocalStorageService {
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+    return directory.path;
   }
 
-  Future<Map<String, String>> uploadMultipleFiles(List<XFile> xFiles) async {
-    final Map<String, String> urls = {};
+  Future<File> saveFileLocally(File file) async {
+    final path = await _localPath;
+    final fileName = file.path.split('/').last;
+    return file.copy('$path/$fileName');
+  }
+
+  Future<Map<String, String>> saveMultipleFilesLocally(
+    List<XFile> xFiles,
+  ) async {
+    final Map<String, String> paths = {};
 
     for (final xFile in xFiles) {
       final file = File(xFile.path);
-      final url = await uploadFile(file);
-      urls[xFile.name] = url;
+      final savedFile = await saveFileLocally(file);
+      paths[xFile.name] = savedFile.path;
     }
 
-    return urls;
+    return paths;
   }
 }

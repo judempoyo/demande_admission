@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
               activeIcon: Icon(Icons.home),
               label: 'Accueil',
             ),
-          /*   BottomNavigationBarItem(
+            /*   BottomNavigationBarItem(
               icon: Icon(Icons.history_outlined),
               activeIcon: Icon(Icons.history),
               label: 'Historique',
@@ -93,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
           onTap: (index) {
-            if (index == 3) {
+            if (index == 2) {
               // Index du bouton de déconnexion
               _showLogoutDialog(context);
             } else {
