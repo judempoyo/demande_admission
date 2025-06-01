@@ -1,8 +1,6 @@
 import 'package:demande_admission/models/admission_request.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 class DatabaseService {
   final SupabaseClient _client = Supabase.instance.client;
 
