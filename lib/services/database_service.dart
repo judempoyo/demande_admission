@@ -7,7 +7,7 @@ class DatabaseService {
   Future<void> saveRequest(AdmissionRequest request) async {
     try {
       final response = await _client
-          .from('admission_requests') // Utilisez le bon nom de table
+          .from('admission_requests')
           .insert(request.toMap());
 
       if (response.error != null) {
