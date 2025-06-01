@@ -40,13 +40,20 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
 
+  DateTime? _parseDate(dynamic date) {
+    if (date == null) return null;
+    if (date is DateTime) return date;
+    if (date is String) return DateTime.tryParse(date);
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = _supabase.auth.currentUser;
-    final createdAt = user?.createdAt;
+    final createdAt = _parseDate(user?.createdAt);
     final formattedDate =
         createdAt != null
-            ? DateFormat('dd/MM/yyyy').format(createdAt as DateTime)
+            ? DateFormat('dd/MM/yyyy').format(createdAt)
             : 'Date inconnue';
 
     return Scaffold(
