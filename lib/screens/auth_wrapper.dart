@@ -16,8 +16,15 @@ class AuthWrapper extends StatelessWidget {
 
         final session = snapshot.data?.session;
         if (session != null) {
-          //return HomeScreen(); // Écran après connexion
-          return DashboardScreen();
+          // Vérifier si l'utilisateur est admin
+          final user = Supabase.instance.client.auth.currentUser;
+          final isAdmin = user?.userMetadata?['role'] == 'admin';
+
+          if (isAdmin) {
+            return DashboardScreen();
+          } else {
+            return HomeScreen();
+          }
         }
         return LoginScreen(); // Écran de connexion
       },

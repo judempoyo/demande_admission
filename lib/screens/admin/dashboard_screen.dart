@@ -1,4 +1,3 @@
-// screens/dashboard_screen.dart
 import 'package:demande_admission/services/admin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,32 +12,35 @@ class DashboardScreen extends StatelessWidget {
 
     return BaseScreen(
       title: 'Tableau de bord',
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: adminService.getAdminStatistics(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: SingleChildScrollView(
+        child: FutureBuilder<Map<String, dynamic>>(
+          future: adminService.getAdminStatistics(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          if (snapshot.hasError) {
-            return Center(child: Text('Erreur: ${snapshot.error}'));
-          }
+            if (snapshot.hasError) {
+              return Center(child: Text('Erreur: ${snapshot.error}'));
+            }
 
-          final stats = snapshot.data!;
+            final stats = snapshot.data!;
 
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 16),
-                _buildStatCards(context, stats),
-                const SizedBox(height: 32),
-                _buildQuickActions(context),
-              ],
-            ),
-          );
-        },
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 16),
+                  _buildStatCards(context, stats),
+                  const SizedBox(height: 32),
+                  _buildQuickActions(context),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -47,9 +49,11 @@ class DashboardScreen extends StatelessWidget {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 3,
+      crossAxisCount:
+          MediaQuery.of(context).size.width > 600 ? 3 : 2, // Adaptatif
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
+      childAspectRatio: 0.8, // Ajustez ce ratio selon vos besoins
       children: [
         _StatCard(
           icon: Icons.request_page,
@@ -131,18 +135,18 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
+      elevation: 1.5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0), // Réduit le padding
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 32, color: color),
+            Icon(icon, size: 28, color: color), // Taille d'icône réduite
             const SizedBox(height: 8),
             Text(
               value,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
@@ -152,6 +156,7 @@ class _StatCard extends StatelessWidget {
               label,
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
+              maxLines: 2, // Limite le texte à 2 lignes
             ),
           ],
         ),
