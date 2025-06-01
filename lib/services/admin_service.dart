@@ -50,25 +50,20 @@ class AdminService {
     String? statusFilter,
   }) async {
     try {
-      final query = _client.from('admission_requests').select();
+      var query = _client.from('admission_requests').select();
 
       if (statusFilter != null) {
-        query.eq('status', statusFilter);
+        query = query.eq('status', statusFilter);
       }
 
-      final response = await query.order('submission_date', ascending: false);
+      final List<Map<String, dynamic>> data = await query
+          .order('submission_date', ascending: false)
+          .then((response) => (response as List).cast<Map<String, dynamic>>());
 
-      // Conversion explicite des types
-      final List<dynamic> data = response as List<dynamic>;
-
-      return data.map<AdmissionRequest>((item) {
-        // Conversion explicite de l'item en Map<String, dynamic>
-        final Map<String, dynamic> itemMap = item as Map<String, dynamic>;
-        return AdmissionRequest.fromMap(itemMap);
-      }).toList();
+      return data.map(AdmissionRequest.fromMap).toList();
     } catch (e) {
       debugPrint('Erreur lors de la récupération des demandes: $e');
-      throw Exception('Échec de la récupération des demandes');
+      throw Exception('Échec de la récupération des demandes: $e');
     }
   }
 
