@@ -1,6 +1,5 @@
 import 'package:demande_admission/screens/profile_tab.dart';
 import 'package:demande_admission/screens/request_form_screen.dart';
-import 'package:demande_admission/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:demande_admission/models/admission_request.dart';
 import 'package:demande_admission/services/database_service.dart';
@@ -21,12 +20,21 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
         title: Text(
           'Mon Espace Admission',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.teal.shade700,
+        backgroundColor: Color(0xFF006D77),
+        elevation: 0,
+        centerTitle: true,
+        shape: ContinuousRectangleBorder(
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(30),
+            bottomRight: Radius.circular(30),
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.notifications, color: Colors.white),
@@ -38,86 +46,89 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton:
           _currentIndex == 0
               ? FloatingActionButton(
-                backgroundColor: Colors.teal.shade600,
+                backgroundColor: Color(0xFF006D77),
                 child: Icon(Icons.add, color: Colors.white),
                 onPressed:
                     () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => RequestFormScreen()),
                     ),
+                elevation: 5,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               )
               : null,
-      bottomNavigationBar: _buildBottomNavBar(),
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          selectedItemColor: Colors.teal.shade700,
-          unselectedItemColor: Colors.grey.shade600,
-          showUnselectedLabels: true,
-          elevation: 10,
-          items: [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Accueil',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profil',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.logout),
-              label: 'Déconnexion',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              spreadRadius: 2,
             ),
           ],
-          onTap: (index) {
-            if (index == 2) {
-              _showLogoutDialog(context);
-            } else {
-              setState(() => _currentIndex = index);
-            }
-          },
         ),
-      ),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text('Déconnexion'),
-            content: Text('Voulez-vous vraiment vous déconnecter ?'),
-            actions: [
-              TextButton(
-                child: Text('Annuler'),
-                onPressed: () => Navigator.pop(context),
+        child: ClipRRect(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            selectedItemColor: Color(0xFF006D77),
+            unselectedItemColor: Colors.grey.shade600,
+            showUnselectedLabels: true,
+            elevation: 10,
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.white,
+            items: [
+              BottomNavigationBarItem(
+                icon: Container(
+                  padding: EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color:
+                        _currentIndex == 0
+                            ? Color(0xFF006D77).withOpacity(0.2)
+                            : Colors.transparent,
+                  ),
+                  child: Icon(Icons.home_outlined),
+                ),
+                activeIcon: Container(
+                  padding: EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Color(0xFF006D77).withOpacity(0.2),
+                  ),
+                  child: Icon(Icons.home),
+                ),
+                label: 'Accueil',
               ),
-              TextButton(
-                child: Text('Déconnexion', style: TextStyle(color: Colors.red)),
-                onPressed: () async {
-                  Navigator.pop(context);
-                  await AuthService().signOut();
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/login',
-                    (route) => false,
-                  );
-                },
+              BottomNavigationBarItem(
+                icon: Container(
+                  padding: EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color:
+                        _currentIndex == 1
+                            ? Color(0xFF006D77).withOpacity(0.2)
+                            : Colors.transparent,
+                  ),
+                  child: Icon(Icons.person_outline),
+                ),
+                activeIcon: Container(
+                  padding: EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Color(0xFF006D77).withOpacity(0.2),
+                  ),
+                  child: Icon(Icons.person),
+                ),
+                label: 'Profil',
               ),
             ],
+            onTap: (index) => setState(() => _currentIndex = index),
           ),
+        ),
+      ),
     );
   }
 }

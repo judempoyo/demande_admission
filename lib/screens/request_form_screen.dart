@@ -58,8 +58,20 @@ class _RequestFormScreenState extends State<RequestFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Nouvelle demande d\'admission'),
+        title: Text('Nouvelle Demande', style: TextStyle(color: Colors.white)),
+        backgroundColor: Color(0xFF006D77),
         elevation: 0,
+        centerTitle: true,
+        shape: ContinuousRectangleBorder(
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(30),
+            bottomRight: Radius.circular(30),
+          ),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(20),
@@ -68,37 +80,42 @@ class _RequestFormScreenState extends State<RequestFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionTitle('Informations personnelles'),
+              _buildSectionHeader('Informations Personnelles'),
+              SizedBox(height: 16),
               _buildTextFormField(
-                'Nom complet',
+                'Nom Complet',
                 _fullNameController,
                 TextInputType.name,
               ),
+              SizedBox(height: 16),
               _buildTextFormField(
                 'Email',
                 _emailController,
                 TextInputType.emailAddress,
               ),
+              SizedBox(height: 16),
               _buildTextFormField(
                 'Téléphone',
                 _phoneController,
                 TextInputType.phone,
               ),
+              SizedBox(height: 16),
               _buildTextFormField(
                 'Adresse',
                 _addressController,
                 TextInputType.streetAddress,
               ),
-
               SizedBox(height: 16),
               _buildDatePicker(),
               SizedBox(height: 16),
-              _buildScholarshipCheckbox(),
+              _buildScholarshipSwitch(),
 
-              _buildSectionTitle('Programme académique'),
+              _buildSectionHeader('Programme Académique'),
+              SizedBox(height: 16),
               _buildProgramDropdown(),
 
-              _buildSectionTitle('Documents à fournir'),
+              _buildSectionHeader('Documents Requis'),
+              SizedBox(height: 16),
               ..._buildDocumentChecklist(),
               SizedBox(height: 16),
               _buildDocumentUploadSection(),
@@ -116,16 +133,13 @@ class _RequestFormScreenState extends State<RequestFormScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 16),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Colors.teal.shade700,
-        ),
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF006D77),
       ),
     );
   }
@@ -135,21 +149,40 @@ class _RequestFormScreenState extends State<RequestFormScreen> {
     TextEditingController controller,
     TextInputType inputType,
   ) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 16),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: inputType,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(),
-          filled: true,
-          fillColor: Colors.grey.shade50,
+    return TextFormField(
+      controller: controller,
+      keyboardType: inputType,
+      decoration: InputDecoration(
+        labelText: label,
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        labelStyle: TextStyle(color: Colors.grey.shade700),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300),
         ),
-        validator:
-            (value) =>
-                value?.isEmpty ?? true ? 'Ce champ est obligatoire' : null,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Color(0xFF006D77), width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.grey.shade50,
       ),
+      validator:
+          (value) => value?.isEmpty ?? true ? 'Ce champ est obligatoire' : null,
+    );
+  }
+
+  Widget _buildScholarshipSwitch() {
+    return SwitchListTile(
+      title: Text('Bénéficiaire d\'une bourse', style: TextStyle(fontSize: 16)),
+      value: _hasScholarship,
+      onChanged: (value) => setState(() => _hasScholarship = value),
+      activeColor: Color(0xFF006D77),
+      contentPadding: EdgeInsets.zero,
     );
   }
 
@@ -175,15 +208,6 @@ class _RequestFormScreenState extends State<RequestFormScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildScholarshipCheckbox() {
-    return CheckboxListTile(
-      title: Text('Bénéficiaire d\'une bourse d\'études'),
-      value: _hasScholarship,
-      onChanged: (value) => setState(() => _hasScholarship = value ?? false),
-      controlAffinity: ListTileControlAffinity.leading,
     );
   }
 
