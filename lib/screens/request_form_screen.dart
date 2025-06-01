@@ -364,7 +364,7 @@ class _RequestFormScreenState extends State<RequestFormScreen> {
         birthDate: _birthDate?.toIso8601String(),
         program: _selectedProgram!,
         hasScholarship: _hasScholarship,
-        documents: uploadedDocs, // Utilisation directe de la Map retournée
+        documents: uploadedDocs,
         status: 'pending',
         submissionDate: DateTime.now().toIso8601String(),
       );
