@@ -1,146 +1,159 @@
-import 'package:demande_admission/screens/profile_tab.dart';
+// screens/dashboard_screen.dart
+import 'package:demande_admission/services/admin_service.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
+import 'base_screen.dart';
 
-class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({super.key});
-
-  @override
-  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
-}
-
-class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  int _currentIndex = 0;
-  final userId = Supabase.instance.client.auth.currentUser?.id ?? '';
-
-  final List<Widget> _screens = [
-    Text('dashboard'),
-    Text('users'),
-    Text('requests'),
-  ];
+class DashboardScreen extends StatelessWidget {
+  const DashboardScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFF8F9FA),
-      appBar: AppBar(
-        title: Text(
-          'Administration',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Color(0xFF006D77),
-        elevation: 0,
-        centerTitle: true,
-        shape: ContinuousRectangleBorder(
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(30),
-            bottomRight: Radius.circular(30),
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.account_circle, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => ProfileTab()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: _screens[_currentIndex],
+    final adminService = Provider.of<AdminService>(context);
 
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              spreadRadius: 2,
+    return BaseScreen(
+      title: 'Tableau de bord',
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: adminService.getAdminStatistics(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Erreur: ${snapshot.error}'));
+          }
+
+          final stats = snapshot.data!;
+
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 16),
+                _buildStatCards(context, stats),
+                const SizedBox(height: 32),
+                _buildQuickActions(context),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildStatCards(BuildContext context, Map<String, dynamic> stats) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 3,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      children: [
+        _StatCard(
+          icon: Icons.request_page,
+          value: stats['totalRequests'].toString(),
+          label: 'Demandes totales',
+          color: Colors.blue,
+        ),
+        _StatCard(
+          icon: Icons.pending_actions,
+          value: stats['pendingRequests'].toString(),
+          label: 'En attente',
+          color: Colors.orange,
+        ),
+        _StatCard(
+          icon: Icons.people,
+          value: stats['totalUsers'].toString(),
+          label: 'Utilisateurs',
+          color: Colors.green,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Actions rapides',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                ActionChip(
+                  avatar: const Icon(Icons.add, size: 18),
+                  label: const Text('Nouvelle demande'),
+                  onPressed: () {},
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.person_add, size: 18),
+                  label: const Text('Ajouter utilisateur'),
+                  onPressed: () {},
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.settings, size: 18),
+                  label: const Text('Paramètres'),
+                  onPressed: () {},
+                ),
+              ],
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            selectedItemColor: Color(0xFF006D77),
-            unselectedItemColor: Colors.grey.shade600,
-            showUnselectedLabels: true,
-            elevation: 10,
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
-            items: [
-              BottomNavigationBarItem(
-                icon: Container(
-                  padding: EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color:
-                        _currentIndex == 0
-                            ? Color(0xFF006D77).withOpacity(0.2)
-                            : Colors.transparent,
-                  ),
-                  child: Icon(Icons.dashboard_outlined),
-                ),
-                activeIcon: Container(
-                  padding: EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Color(0xFF006D77).withOpacity(0.2),
-                  ),
-                  child: Icon(Icons.dashboard),
-                ),
-                label: 'Tableau de bord',
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+
+  const _StatCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 32, color: color),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: color,
               ),
-              BottomNavigationBarItem(
-                icon: Container(
-                  padding: EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color:
-                        _currentIndex == 1
-                            ? Color(0xFF006D77).withOpacity(0.2)
-                            : Colors.transparent,
-                  ),
-                  child: Icon(Icons.school_outlined),
-                ),
-                activeIcon: Container(
-                  padding: EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Color(0xFF006D77).withOpacity(0.2),
-                  ),
-                  child: Icon(Icons.school),
-                ),
-                label: 'Demandes',
-              ),
-              BottomNavigationBarItem(
-                icon: Container(
-                  padding: EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color:
-                        _currentIndex == 1
-                            ? Color(0xFF006D77).withOpacity(0.2)
-                            : Colors.transparent,
-                  ),
-                  child: Icon(Icons.supervised_user_circle_outlined),
-                ),
-                activeIcon: Container(
-                  padding: EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Color(0xFF006D77).withOpacity(0.2),
-                  ),
-                  child: Icon(Icons.supervised_user_circle),
-                ),
-                label: 'Utilisateurs',
-              ),
-            ],
-            onTap: (index) => setState(() => _currentIndex = index),
-          ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );

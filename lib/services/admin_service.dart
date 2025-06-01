@@ -2,8 +2,9 @@ import 'package:demande_admission/models/admission_request.dart';
 import 'package:demande_admission/models/user.dart' as userModel;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 
-class AdminService {
+class AdminService with ChangeNotifier {
   final SupabaseClient _client = Supabase.instance.client;
 
   // Récupérer tous les utilisateurs
@@ -120,6 +121,7 @@ class AdminService {
       debugPrint('Erreur lors de la suppression: $response');
       throw Exception('Échec de la suppression de l\'utilisateur');
     }
+    notifyListeners(); // Ajoutez cette ligne après les modifications
   }
 
   // Statistiques pour le dashboard admin

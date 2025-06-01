@@ -1,3 +1,4 @@
+import 'package:demande_admission/screens/admin/dashboard_screen.dart';
 import 'package:demande_admission/screens/home_screen.dart';
 import 'package:demande_admission/screens/login_screen.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +16,8 @@ class AuthWrapper extends StatelessWidget {
 
         final session = snapshot.data?.session;
         if (session != null) {
-          return HomeScreen(); // Écran après connexion
+          //return HomeScreen(); // Écran après connexion
+          return DashboardScreen();
         }
         return LoginScreen(); // Écran de connexion
       },
