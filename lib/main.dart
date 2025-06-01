@@ -1,11 +1,15 @@
 import 'package:demande_admission/screens/auth_wrapper.dart';
 import 'package:demande_admission/screens/home_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Supabase.initialize(
+    url: 'https://xoxsjoeqdjbjgplruvgv.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhveHNqb2VxZGpiamdwbHJ1dmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3MzY5NjksImV4cCI6MjA2NDMxMjk2OX0.3e3yPhY7FAHQ8FJtTNEBBT1jzV_eb6UyFG73wUBwcsc',
+  );
   runApp(
     MaterialApp(
       theme: ThemeData(

@@ -4,7 +4,7 @@ import 'package:demande_admission/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:demande_admission/models/admission_request.dart';
 import 'package:demande_admission/services/database_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -14,15 +14,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-  final userId = FirebaseAuth.instance.currentUser!.uid;
+  final userId = Supabase.instance.client.auth.currentUser?.id ?? '';
 
-  final List<Widget> _screens = [
-    DashboardTab(),
-
-    /*  RequestHistoryTab(),
-    */
-    ProfileTab(),
-  ];
+  final List<Widget> _screens = [DashboardTab(), ProfileTab()];
 
   @override
   Widget build(BuildContext context) {
@@ -76,25 +70,18 @@ class _HomeScreenState extends State<HomeScreen> {
               activeIcon: Icon(Icons.home),
               label: 'Accueil',
             ),
-            /*   BottomNavigationBarItem(
-              icon: Icon(Icons.history_outlined),
-              activeIcon: Icon(Icons.history),
-              label: 'Historique',
-            ), */
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person),
               label: 'Profil',
             ),
             BottomNavigationBarItem(
-              // Nouvel item pour déconnexion
               icon: Icon(Icons.logout),
               label: 'Déconnexion',
             ),
           ],
           onTap: (index) {
             if (index == 2) {
-              // Index du bouton de déconnexion
               _showLogoutDialog(context);
             } else {
               setState(() => _currentIndex = index);
@@ -104,53 +91,50 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-}
 
-// Ajoutez cette méthode dans _HomeScreenState
-void _showLogoutDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder:
-        (context) => AlertDialog(
-          title: Text('Déconnexion'),
-          content: Text('Voulez-vous vraiment vous déconnecter ?'),
-          actions: [
-            TextButton(
-              child: Text('Annuler'),
-              onPressed: () => Navigator.pop(context),
-            ),
-            TextButton(
-              child: Text('Déconnexion', style: TextStyle(color: Colors.red)),
-              onPressed: () {
-                Navigator.pop(context);
-                AuthService().signOut();
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/login',
-                  (route) => false,
-                );
-              },
-            ),
-          ],
-        ),
-  );
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text('Déconnexion'),
+            content: Text('Voulez-vous vraiment vous déconnecter ?'),
+            actions: [
+              TextButton(
+                child: Text('Annuler'),
+                onPressed: () => Navigator.pop(context),
+              ),
+              TextButton(
+                child: Text('Déconnexion', style: TextStyle(color: Colors.red)),
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await AuthService().signOut();
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/login',
+                    (route) => false,
+                  );
+                },
+              ),
+            ],
+          ),
+    );
+  }
 }
 
 class DashboardTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final userId = Supabase.instance.client.auth.currentUser?.id ?? '';
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           _buildHeader(),
           SizedBox(height: 24),
 
-          // Carte d'action
           _buildActionCard(
             icon: Icons.school,
             title: 'Nouvelle demande',
@@ -163,7 +147,6 @@ class DashboardTab extends StatelessWidget {
           ),
           SizedBox(height: 24),
 
-          // Demandes récentes
           Text(
             'Mes demandes récentes',
             style: TextStyle(
@@ -180,34 +163,69 @@ class DashboardTab extends StatelessWidget {
   }
 
   Widget _buildHeader() {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 30,
-          backgroundColor: Colors.teal.shade100,
-          child: Icon(Icons.person, size: 40, color: Colors.teal.shade700),
-        ),
-        SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return FutureBuilder<UserMetadata>(
+      future: _getUserProfile(),
+      builder: (context, snapshot) {
+        final fullName = snapshot.data?.fullName ?? 'Étudiant';
+        final email = snapshot.data?.email ?? '';
+
+        return Row(
           children: [
-            Text(
-              'Bienvenue',
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            CircleAvatar(
+              radius: 30,
+              backgroundColor: Colors.teal.shade100,
+              child: Icon(Icons.person, size: 40, color: Colors.teal.shade700),
             ),
-            SizedBox(height: 4),
-            Text(
-              'Étudiant',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.teal.shade800,
-              ),
+            SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bienvenue',
+                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  fullName,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal.shade800,
+                  ),
+                ),
+                Text(
+                  email,
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                ),
+              ],
             ),
           ],
-        ),
-      ],
+        );
+      },
     );
+  }
+
+  Future<UserMetadata> _getUserProfile() async {
+    try {
+      // Version corrigée avec la syntaxe correcte de Supabase
+      final response =
+          await Supabase.instance.client
+              .from('profiles')
+              .select()
+              .eq(
+                'user_id',
+                Supabase.instance.client.auth.currentUser?.id as Object,
+              )
+              .single();
+
+      return UserMetadata.fromMap(response);
+    } catch (e) {
+      // Retourne des valeurs par défaut en cas d'erreur
+      return UserMetadata(
+        fullName: 'Étudiant',
+        email: Supabase.instance.client.auth.currentUser?.email ?? '',
+      );
+    }
   }
 
   Widget _buildActionCard({
@@ -277,7 +295,7 @@ class DashboardTab extends StatelessWidget {
           return _buildEmptyState();
         }
 
-        final requests = snapshot.data!.take(3).toList(); // Limite à 3 demandes
+        final requests = snapshot.data!.take(3).toList();
 
         return Column(
           children:
@@ -350,5 +368,19 @@ class DashboardTab extends StatelessWidget {
       default:
         return Colors.orange;
     }
+  }
+}
+
+class UserMetadata {
+  final String fullName;
+  final String email;
+
+  UserMetadata({required this.fullName, required this.email});
+
+  factory UserMetadata.fromMap(Map<String, dynamic> map) {
+    return UserMetadata(
+      fullName: map['full_name'] ?? '',
+      email: map['email'] ?? '',
+    );
   }
 }

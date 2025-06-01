@@ -1,20 +1,20 @@
 import 'package:demande_admission/screens/home_screen.dart';
 import 'package:demande_admission/screens/login_screen.dart';
-import 'package:demande_admission/services/auth_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: AuthService().userStream,
+    return StreamBuilder<AuthState>(
+      stream: Supabase.instance.client.auth.onAuthStateChange,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
+          return const Center(child: CircularProgressIndicator());
         }
 
-        if (snapshot.hasData) {
+        final session = snapshot.data?.session;
+        if (session != null) {
           return HomeScreen(); // Écran après connexion
         }
         return LoginScreen(); // Écran de connexion

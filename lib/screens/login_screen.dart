@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/auth_service.dart';
 import 'package:demande_admission/screens/home_screen.dart';
 import 'package:demande_admission/screens/register_screen.dart';
@@ -23,10 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.teal.shade50,
-              Colors.white,
-            ],
+            colors: [Colors.teal.shade50, Colors.white],
           ),
         ),
         child: Center(
@@ -36,13 +32,9 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Logo
-                Icon(
-                  Icons.school,
-                  size: 80,
-                  color: Colors.teal.shade700,
-                ),
+                Icon(Icons.school, size: 80, color: Colors.teal.shade700),
                 SizedBox(height: 20),
-                
+
                 // Titre
                 Text(
                   'Connexion',
@@ -75,8 +67,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            validator: (value) => 
-                                value!.isEmpty ? 'Veuillez entrer un email' : null,
+                            validator:
+                                (value) =>
+                                    value!.isEmpty
+                                        ? 'Veuillez entrer un email'
+                                        : null,
                           ),
                           SizedBox(height: 20),
                           TextFormField(
@@ -89,8 +84,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            validator: (value) => 
-                                value!.length < 6 ? '6 caractères minimum' : null,
+                            validator:
+                                (value) =>
+                                    value!.length < 6
+                                        ? '6 caractères minimum'
+                                        : null,
                           ),
                           SizedBox(height: 24),
                           SizedBox(
@@ -104,9 +102,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                               onPressed: _submitForm,
-                              child: _isLoading
-                                  ? CircularProgressIndicator(color: Colors.white)
-                                  : Text('Se connecter'),
+                              child:
+                                  _isLoading
+                                      ? CircularProgressIndicator(
+                                        color: Colors.white,
+                                      )
+                                      : Text('Se connecter'),
                             ),
                           ),
                         ],
@@ -118,46 +119,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Lien inscription
                 TextButton(
-                  onPressed: () => Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (_) => RegisterScreen()),
-                  ),
+                  onPressed:
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => RegisterScreen()),
+                      ),
                   child: Text(
                     'Pas de compte ? Créez-en un',
                     style: TextStyle(color: Colors.teal.shade700),
                   ),
                 ),
                 SizedBox(height: 24),
-
-                // Séparateur
-                Row(
-                  children: [
-                    Expanded(child: Divider()),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Text('OU'),
-                    ),
-                    Expanded(child: Divider()),
-                  ],
-                ),
-                SizedBox(height: 24),
-
-                // Bouton Google
-                OutlinedButton.icon(
-                  icon: FaIcon(FontAwesomeIcons.google, color: Colors.red),
-                  label: Text(
-                    'Continuer avec Google',
-                    style: TextStyle(color: Colors.grey.shade800),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 50),
-                    side: BorderSide(color: Colors.grey.shade300),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: _signInWithGoogle,
-                ),
               ],
             ),
           ),
@@ -175,24 +147,16 @@ class _LoginScreenState extends State<LoginScreen> {
           _passwordController.text.trim(),
         );
         Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (_) => HomeScreen()));
+          context,
+          MaterialPageRoute(builder: (_) => HomeScreen()),
+        );
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       } finally {
         setState(() => _isLoading = false);
       }
-    }
-  }
-
-  Future<void> _signInWithGoogle() async {
-    try {
-      await AuthService().signInWithGoogle();
-      Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (_) => HomeScreen()));
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())));
     }
   }
 }
