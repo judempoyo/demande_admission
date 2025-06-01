@@ -1,6 +1,7 @@
 import 'dart:convert';
+import 'package:equatable/equatable.dart';
 
-class AdmissionRequest {
+class AdmissionRequest extends Equatable {
   final String? id;
   final String userId;
   final String fullName;
@@ -105,4 +106,22 @@ class AdmissionRequest {
       comments: comments ?? this.comments,
     );
   }
+
+  @override
+  List<Object?> get props => [
+    id,
+    userId,
+    fullName,
+    email,
+    phone,
+    address,
+    birthDate,
+    program,
+    hasScholarship,
+    status,
+    documents,
+    submissionDate,
+    decisionDate,
+    comments,
+  ];
 }

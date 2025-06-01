@@ -1,3 +1,6 @@
+import 'package:demande_admission/screens/admin/dashboard_screen.dart';
+import 'package:demande_admission/screens/admin/requests_screens.dart';
+import 'package:demande_admission/screens/admin/users_screen.dart';
 import 'package:demande_admission/screens/auth_wrapper.dart';
 import 'package:demande_admission/screens/home_screen.dart';
 import 'package:flutter/material.dart';
@@ -24,8 +27,14 @@ Future<void> main() async {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
-      home: AuthWrapper(),
-      routes: {'/home': (context) => HomeScreen()},
+      //home: AuthWrapper(),
+      home: AdminDashboardScreen(),
+      routes: {
+        '/home': (context) => HomeScreen(),
+        '/admin/home': (context) => AdminDashboardScreen(),
+        '/admin/users': (context) => UsersScreen(),
+        '/admin/requests': (context) => RequestsScreens(),
+      },
     ),
   );
 }
