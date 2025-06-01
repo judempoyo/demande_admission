@@ -349,7 +349,7 @@ class _RequestFormScreenState extends State<RequestFormScreen> {
           '${_fullNameController.text}_${DateTime.now().millisecondsSinceEpoch}'
               .replaceAll(RegExp(r'[^\w-]'), '_');
       final uploadedDocs = await _storageService.uploadMultipleFiles(
-        'student_documents',
+        'documents',
         _documents,
         prefix: filePrefix,
       );
