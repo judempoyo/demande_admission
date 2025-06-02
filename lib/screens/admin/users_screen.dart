@@ -124,7 +124,7 @@ class _UserTile extends StatelessWidget {
                   ],
               onSelected: (value) {
                 if (value == 'delete') {
-                  _showDeleteDialog(context, user.id);
+                  _showDeleteDialog(context, user.user_id);
                 }
               },
             ),
@@ -241,7 +241,10 @@ class UserDetailsDialog extends StatelessWidget {
         ),
         ElevatedButton(
           onPressed: () async {
-            await adminService.updateUserRole(userId: user.id, newRole: role);
+            await adminService.updateUserRole(
+              userId: user.user_id,
+              newRole: role,
+            );
             Navigator.pop(context);
           },
           child: Text('Enregistrer'),
