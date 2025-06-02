@@ -23,8 +23,8 @@ class User extends Equatable {
     return User(
       id: map['id'] as String,
       email: map['email'] as String,
-      fullName: map['full_name']?.toString(),
-      phone: map['phone']?.toString(),
+      fullName: map['full_name']?.toString() ?? '',
+      phone: map['phone']?.toString() ?? '',
       role: map['role']?.toString() ?? 'student',
       createdAt:
           map['created_at'] != null

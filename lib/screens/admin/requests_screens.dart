@@ -99,6 +99,107 @@ class _RequestsScreenState extends State<RequestsScreen> {
   }
 }
 
+class RequestDetailsDialog extends StatelessWidget {
+  final AdmissionRequest request;
+  final AdminService adminService;
+
+  const RequestDetailsDialog({
+    required this.request,
+    required this.adminService,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    String status = request.status;
+    final commentsController = TextEditingController(
+      text: request.comments ?? '',
+    );
+
+    return AlertDialog(
+      title: Text('Détails de la demande'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DropdownButtonFormField<String>(
+            value: status,
+            items: [
+              DropdownMenuItem(value: 'pending', child: Text('En attente')),
+              DropdownMenuItem(value: 'approved', child: Text('Approuvée')),
+              DropdownMenuItem(value: 'rejected', child: Text('Rejetée')),
+            ],
+            onChanged: (value) => status = value!,
+          ),
+          SizedBox(height: 16),
+          TextField(
+            controller: commentsController,
+            decoration: InputDecoration(labelText: 'Commentaires'),
+            maxLines: 3,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Annuler', style: TextStyle(color: Colors.red)),
+        ),
+        TextButton(
+          onPressed: () async {
+            await _showDeleteConfirmation(context);
+          },
+          child: Text('Supprimer', style: TextStyle(color: Colors.red)),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            await adminService.updateRequestStatus(
+              requestId: request.id!,
+              status: status,
+              comments: commentsController.text,
+            );
+            Navigator.pop(context);
+          },
+          child: Text('Enregistrer'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showDeleteConfirmation(BuildContext context) async {
+    return showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text('Confirmer la suppression'),
+            content: Text('Voulez-vous vraiment supprimer cette demande ?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  try {
+                    await adminService.deleteRequest(request.id!);
+                    Navigator.pop(context); // Fermer la boîte de confirmation
+                    Navigator.pop(context); // Fermer le dialogue de détails
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Demande supprimée')),
+                    );
+                  } catch (e) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erreur: ${e.toString()}')),
+                    );
+                  }
+                },
+                child: Text('Supprimer', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+    );
+  }
+}
+
 class _RequestCard extends StatelessWidget {
   final AdmissionRequest request;
 
@@ -112,7 +213,17 @@ class _RequestCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          // Naviguer vers les détails de la demande
+          showDialog(
+            context: context,
+            builder:
+                (context) => RequestDetailsDialog(
+                  request: request,
+                  adminService: Provider.of<AdminService>(
+                    context,
+                    listen: false,
+                  ),
+                ),
+          );
         },
         child: Padding(
           padding: const EdgeInsets.all(16.0),

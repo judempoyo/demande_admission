@@ -30,10 +30,7 @@ class _BaseScreenState extends State<BaseScreen> {
         centerTitle: false,
         actions: [
           IconButton(
-            icon: const CircleAvatar(
-              backgroundImage: AssetImage('assets/profile_placeholder.png'),
-              radius: 16,
-            ),
+            icon: Icon(Icons.account_circle_outlined),
             onPressed: () {
               // Navigation vers le profil
               Navigator.pushNamed(context, '/profile');
@@ -75,9 +72,15 @@ class _BaseScreenState extends State<BaseScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 30,
-                  backgroundImage: AssetImage('assets/logo.png'),
+                  backgroundColor:
+                      Theme.of(context).colorScheme.primaryContainer,
+                  child: Icon(
+                    Icons.school,
+                    size: 30,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Text(

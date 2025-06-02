@@ -94,7 +94,11 @@ class _UserTile extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          child: Text(user.fullName?[0] ?? '?'),
+          child: Text(
+            (user.fullName?.isNotEmpty ?? false)
+                ? user.fullName![0]
+                : user.email[0],
+          ),
         ),
         title: Text(user.fullName ?? user.email),
         subtitle: Text(user.email),
@@ -127,7 +131,17 @@ class _UserTile extends StatelessWidget {
           ],
         ),
         onTap: () {
-          // Naviguer vers les détails de l'utilisateur
+          showDialog(
+            context: context,
+            builder:
+                (context) => UserDetailsDialog(
+                  user: user,
+                  adminService: Provider.of<AdminService>(
+                    context,
+                    listen: false,
+                  ),
+                ),
+          );
         },
       ),
     );
@@ -181,6 +195,58 @@ class _UserTile extends StatelessWidget {
               ),
             ],
           ),
+    );
+  }
+}
+
+class UserDetailsDialog extends StatelessWidget {
+  final userModel.User user;
+  final AdminService adminService;
+
+  const UserDetailsDialog({
+    required this.user,
+    required this.adminService,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    String role = user.role;
+
+    return AlertDialog(
+      title: Text('Modifier utilisateur'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: CircleAvatar(child: Text(user.email[0])),
+            title: Text(user.email),
+          ),
+          SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: role,
+            items: [
+              DropdownMenuItem(value: 'admin', child: Text('Administrateur')),
+              DropdownMenuItem(value: 'student', child: Text('Étudiant')),
+              DropdownMenuItem(value: 'teacher', child: Text('Enseignant')),
+            ],
+            onChanged: (value) => role = value!,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Annuler'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            await adminService.updateUserRole(userId: user.id, newRole: role);
+            Navigator.pop(context);
+          },
+          child: Text('Enregistrer'),
+        ),
+      ],
     );
   }
 }

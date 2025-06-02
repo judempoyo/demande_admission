@@ -1,3 +1,4 @@
+import 'package:demande_admission/screens/admin/users_screen.dart';
 import 'package:demande_admission/services/admin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -103,7 +104,11 @@ class DashboardScreen extends StatelessWidget {
                 ActionChip(
                   avatar: const Icon(Icons.person_add, size: 18),
                   label: const Text('Ajouter utilisateur'),
-                  onPressed: () {},
+                  onPressed:
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => UsersScreen()),
+                      ),
                 ),
                 ActionChip(
                   avatar: const Icon(Icons.settings, size: 18),

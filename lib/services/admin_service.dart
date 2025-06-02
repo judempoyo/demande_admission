@@ -152,6 +152,15 @@ class AdminService with ChangeNotifier {
     };
   }
 
+  Future<void> deleteRequest(String requestId) async {
+    try {
+      await _client.from('admission_requests').delete().eq('id', requestId);
+    } catch (e) {
+      debugPrint('Erreur suppression demande: $e');
+      throw Exception('Échec de la suppression');
+    }
+  }
+
   Future<void> promoteToAdmin(String email) async {
     try {
       await _client
