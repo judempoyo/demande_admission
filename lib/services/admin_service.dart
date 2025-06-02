@@ -151,4 +151,16 @@ class AdminService with ChangeNotifier {
       'totalUsers': totalUsers,
     };
   }
+
+  Future<void> promoteToAdmin(String email) async {
+    try {
+      await _client
+          .from('profiles')
+          .update({'role': 'admin'})
+          .eq('email', email);
+    } catch (e) {
+      debugPrint('Erreur promotion admin: $e');
+      throw Exception('Échec de la promotion en admin');
+    }
+  }
 }
