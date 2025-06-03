@@ -4,7 +4,7 @@ import 'package:demande_admission/screens/admin/requests_screens.dart';
 import 'package:demande_admission/screens/admin/users_screen.dart';
 import 'package:demande_admission/screens/auth_wrapper.dart';
 import 'package:demande_admission/screens/home_screen.dart';
-import 'package:demande_admission/screens/profile_tab.dart';
+//import 'package:demande_admission/screens/profile_tab.dart';
 import 'package:demande_admission/services/admin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

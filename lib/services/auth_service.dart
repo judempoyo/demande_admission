@@ -49,36 +49,6 @@ class AuthService {
     }
   }
 
-  // Création d'un utilisateur par un admin
-  Future<User?> createUser(
-    String email,
-    String password, {
-    String role = 'student',
-  }) async {
-    try {
-      final response = await _client.auth.admin.createUser(
-        AdminUserAttributes(
-          email: email,
-          password: password,
-          emailConfirm: true,
-        ),
-      );
-
-      if (response.user != null) {
-        await _client.from('profiles').upsert({
-          'id': response.user!.id,
-          'email': response.user!.email,
-          'role': role,
-          'created_at': DateTime.now().toIso8601String(),
-        });
-      }
-
-      return response.user;
-    } on AuthException catch (e) {
-      throw _getErrorMessage(e.message);
-    }
-  }
-
   // Connexion avec Google
   Future<User?> signInWithGoogle() async {
     try {
@@ -124,6 +94,18 @@ class AuthService {
       if (response.user?.emailConfirmedAt == null) {
         await signOut();
         throw "Votre compte n'a pas encore été confirmé. Veuillez vérifier vos emails.";
+      }
+
+      // Vérifie et crée le profil si nécessaire
+      final existingProfile =
+          await _client
+              .from('profiles')
+              .select()
+              .eq('user_id', response.user!.id)
+              .maybeSingle();
+
+      if (existingProfile == null) {
+        await _createProfile(response.user!);
       }
 
       return response.user;

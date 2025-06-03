@@ -52,7 +52,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: 30),
 
-                // Carte de formulaire avec effet de verre
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
