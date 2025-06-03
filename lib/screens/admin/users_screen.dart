@@ -14,136 +14,120 @@ class UsersScreen extends StatefulWidget {
 
 class _UsersScreenState extends State<UsersScreen> {
   String _searchQuery = '';
-  late Stream<List<userModel.User>> _usersStream;
   List<userModel.User> _allUsers = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _usersStream = _getFilteredUsers();
-  }
-
-  Stream<List<userModel.User>> _getFilteredUsers() {
-    return Provider.of<AdminService>(
-      context,
-      listen: false,
-    ).getAllUsers().map((users) => _filterUsers(users));
-  }
-
-  List<userModel.User> _filterUsers(List<userModel.User> users) {
-    if (_searchQuery.isEmpty) return users;
-
-    final query = _searchQuery.toLowerCase();
-    return users.where((user) {
-      return (user.fullName?.toLowerCase().contains(query) ?? false) ||
-          user.email.toLowerCase().contains(query) ||
-          user.role.toLowerCase().contains(query);
-    }).toList();
-  }
-
-  void _updateStream() {
-    setState(() {
-      _usersStream = _getFilteredUsers();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return BaseScreen(
       title: 'Gestion des utilisateurs',
       actions: [
-        IconButton(icon: const Icon(Icons.refresh), onPressed: _updateStream),
+        IconButton(icon: const Icon(Icons.add), onPressed: _showAddUserDialog),
       ],
+
       body: StreamBuilder<List<userModel.User>>(
-        stream: _usersStream,
+        stream: Provider.of<AdminService>(context).getAllUsers(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+          if (snapshot.hasData) {
+            _allUsers = snapshot.data!;
           }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Erreur de chargement',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(snapshot.error.toString(), textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _updateStream,
-                    child: const Text('Réessayer'),
-                  ),
-                ],
-              ),
-            );
-          }
+          final filteredUsers =
+              _searchQuery.isEmpty
+                  ? _allUsers
+                  : _allUsers.where((user) {
+                    final query = _searchQuery.toLowerCase();
+                    return (user.fullName?.toLowerCase().contains(query) ??
+                            false) ||
+                        user.email.toLowerCase().contains(query) ||
+                        user.role.toLowerCase().contains(query);
+                  }).toList();
 
-          final users = snapshot.data!;
-
-          if (users.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _searchQuery.isEmpty
-                        ? Icons.people_outline
-                        : Icons.search_off,
-                    size: 48,
-                    color: Colors.grey,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _searchQuery.isEmpty
-                        ? 'Aucun utilisateur trouvé'
-                        : 'Aucun résultat pour "$_searchQuery"',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  if (_searchQuery.isNotEmpty)
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _searchQuery = '';
-                          _updateStream();
-                        });
-                      },
-                      child: const Text('Réinitialiser la recherche'),
-                    ),
-                ],
-              ),
-            );
-          }
-
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                _buildSearchBar(),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      _updateStream();
-                      await Future.delayed(const Duration(seconds: 1));
-                    },
-                    child: ListView.builder(
-                      itemCount: users.length,
-                      itemBuilder: (context, index) {
-                        return _UserTile(user: users[index]);
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
+          return _buildContent(filteredUsers, snapshot);
         },
+      ),
+    );
+  }
+
+  Widget _buildContent(List<userModel.User> users, AsyncSnapshot snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (snapshot.hasError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              'Erreur de chargement',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(snapshot.error.toString(), textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => setState(() {}),
+              child: const Text('Réessayer'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (users.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              _searchQuery.isEmpty ? Icons.people_outline : Icons.search_off,
+              size: 48,
+              color: Colors.grey,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _searchQuery.isEmpty
+                  ? 'Aucun utilisateur trouvé'
+                  : 'Aucun résultat pour "$_searchQuery"',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            if (_searchQuery.isNotEmpty)
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _searchQuery = '';
+                  });
+                },
+                child: const Text('Réinitialiser la recherche'),
+              ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          _buildSearchBar(),
+          const SizedBox(height: 16),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                setState(() {});
+                await Future.delayed(const Duration(seconds: 1));
+              },
+              child: ListView.builder(
+                itemCount: users.length,
+                itemBuilder: (context, index) {
+                  return _UserTile(user: users[index]);
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -160,7 +144,6 @@ class _UsersScreenState extends State<UsersScreen> {
                   onPressed: () {
                     setState(() {
                       _searchQuery = '';
-                      _updateStream();
                     });
                   },
                 )
@@ -175,8 +158,100 @@ class _UsersScreenState extends State<UsersScreen> {
       onChanged: (value) {
         setState(() {
           _searchQuery = value;
-          _updateStream();
         });
+      },
+    );
+  }
+
+  Future<void> _showAddUserDialog() async {
+    final formKey = GlobalKey<FormState>();
+    final emailController = TextEditingController();
+    final nameController = TextEditingController();
+    String selectedRole = 'student';
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Ajouter un utilisateur'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Veuillez entrer un email';
+                    }
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
+                      return 'Email invalide';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Nom complet'),
+                ),
+                DropdownButtonFormField<String>(
+                  value: selectedRole,
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'admin',
+                      child: Text('Administrateur'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'teacher',
+                      child: Text('Enseignant'),
+                    ),
+                    DropdownMenuItem(value: 'student', child: Text('Étudiant')),
+                  ],
+                  onChanged: (value) => selectedRole = value!,
+                  decoration: const InputDecoration(labelText: 'Rôle'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  try {
+                    await Provider.of<AdminService>(
+                      context,
+                      listen: false,
+                    ).createUser(
+                      email: emailController.text,
+                      fullName: nameController.text,
+                      role: selectedRole,
+                    );
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Utilisateur créé avec succès'),
+                      ),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erreur: ${e.toString()}')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Créer'),
+            ),
+          ],
+        );
       },
     );
   }

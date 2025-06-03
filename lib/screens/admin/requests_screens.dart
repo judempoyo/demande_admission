@@ -16,50 +16,10 @@ class RequestsScreen extends StatefulWidget {
 class _RequestsScreenState extends State<RequestsScreen> {
   String _filter = 'all';
   String _searchQuery = '';
-  late Stream<List<AdmissionRequest>> _requestsStream;
-
-  @override
-  void initState() {
-    super.initState();
-    _requestsStream = _getFilteredRequests();
-  }
-
-  Stream<List<AdmissionRequest>> _getFilteredRequests() {
-    return (_filter == 'all'
-            ? Provider.of<AdminService>(
-              context,
-              listen: false,
-            ).getAllAdmissionRequests()
-            : Provider.of<AdminService>(
-              context,
-              listen: false,
-            ).getAllAdmissionRequests(statusFilter: _filter))
-        .map((requests) => _filterRequests(requests));
-  }
-
-  List<AdmissionRequest> _filterRequests(List<AdmissionRequest> requests) {
-    if (_searchQuery.isEmpty) return requests;
-
-    final query = _searchQuery.toLowerCase();
-    return requests.where((request) {
-      return request.fullName.toLowerCase().contains(query) ||
-          request.email.toLowerCase().contains(query) ||
-          request.program.toLowerCase().contains(query) ||
-          request.status.toLowerCase().contains(query) ||
-          (request.comments?.toLowerCase().contains(query) ?? false);
-    }).toList();
-  }
-
-  void _updateStream() {
-    setState(() {
-      _requestsStream = _getFilteredRequests();
-    });
-  }
+  List<AdmissionRequest> _allRequests = []; // Cache pour toutes les demandes
 
   @override
   Widget build(BuildContext context) {
-    //final adminService = Provider.of<AdminService>(context);
-
     return BaseScreen(
       title: 'Gestion des demandes',
       actions: [
@@ -67,7 +27,6 @@ class _RequestsScreenState extends State<RequestsScreen> {
           onSelected: (value) {
             setState(() {
               _filter = value;
-              _updateStream();
             });
           },
           itemBuilder:
@@ -87,36 +46,94 @@ class _RequestsScreenState extends State<RequestsScreen> {
         ),
       ],
       body: StreamBuilder<List<AdmissionRequest>>(
-        stream: _requestsStream,
+        stream:
+            _filter == 'all'
+                ? Provider.of<AdminService>(context).getAllAdmissionRequests()
+                : Provider.of<AdminService>(
+                  context,
+                ).getAllAdmissionRequests(statusFilter: _filter),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+          if (snapshot.hasData) {
+            _allRequests = snapshot.data!;
           }
 
-          if (snapshot.hasError) {
-            return Center(child: Text('Erreur: ${snapshot.error}'));
-          }
+          final filteredRequests =
+              _searchQuery.isEmpty
+                  ? _allRequests
+                  : _allRequests.where((request) {
+                    final query = _searchQuery.toLowerCase();
+                    return request.fullName.toLowerCase().contains(query) ||
+                        request.email.toLowerCase().contains(query) ||
+                        request.program.toLowerCase().contains(query) ||
+                        request.status.toLowerCase().contains(query) ||
+                        (request.comments?.toLowerCase().contains(query) ??
+                            false);
+                  }).toList();
 
-          final requests = snapshot.data!;
-
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                _buildSearchBar(),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: requests.length,
-                    itemBuilder: (context, index) {
-                      return _RequestCard(request: requests[index]);
-                    },
-                  ),
-                ),
-              ],
-            ),
-          );
+          return _buildContent(filteredRequests, snapshot);
         },
+      ),
+    );
+  }
+
+  Widget _buildContent(
+    List<AdmissionRequest> requests,
+    AsyncSnapshot snapshot,
+  ) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (snapshot.hasError) {
+      return Center(child: Text('Erreur: ${snapshot.error}'));
+    }
+
+    if (requests.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              _searchQuery.isEmpty ? Icons.inbox : Icons.search_off,
+              size: 48,
+              color: Colors.grey,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _searchQuery.isEmpty
+                  ? 'Aucune demande trouvée'
+                  : 'Aucun résultat pour "$_searchQuery"',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            if (_searchQuery.isNotEmpty)
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _searchQuery = '';
+                  });
+                },
+                child: const Text('Réinitialiser la recherche'),
+              ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          _buildSearchBar(),
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView.builder(
+              itemCount: requests.length,
+              itemBuilder: (context, index) {
+                return _RequestCard(request: requests[index]);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -126,6 +143,17 @@ class _RequestsScreenState extends State<RequestsScreen> {
       decoration: InputDecoration(
         hintText: 'Rechercher une demande...',
         prefixIcon: const Icon(Icons.search),
+        suffixIcon:
+            _searchQuery.isNotEmpty
+                ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                )
+                : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide.none,
@@ -136,7 +164,6 @@ class _RequestsScreenState extends State<RequestsScreen> {
       onChanged: (value) {
         setState(() {
           _searchQuery = value;
-          _updateStream();
         });
       },
     );

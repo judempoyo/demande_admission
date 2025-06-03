@@ -173,6 +173,23 @@ class AdminService with ChangeNotifier {
     }
   }
 
+  Future<void> createUser({
+    required String email,
+    required String role,
+    String? fullName,
+  }) async {
+    final authResponse = await _client.auth.admin.createUser(
+      AdminUserAttributes(email: email, emailConfirm: true),
+    );
+
+    await _client.from('profiles').insert({
+      'user_id': authResponse.user!.id,
+      'email': email,
+      'full_name': fullName,
+      'role': role,
+    });
+  }
+
   Future<void> updateUser({
     required String userId,
     required String newRole,
