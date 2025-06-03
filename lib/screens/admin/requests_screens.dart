@@ -58,7 +58,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final adminService = Provider.of<AdminService>(context);
+    //final adminService = Provider.of<AdminService>(context);
 
     return BaseScreen(
       title: 'Gestion des demandes',

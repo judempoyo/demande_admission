@@ -172,4 +172,15 @@ class AdminService with ChangeNotifier {
       throw Exception('Échec de la promotion en admin');
     }
   }
+
+  Future<void> updateUser({
+    required String userId,
+    required String newRole,
+    String? fullName,
+  }) async {
+    await _client
+        .from('profiles')
+        .update({'role': newRole, if (fullName != null) 'full_name': fullName})
+        .eq('user_id', userId);
+  }
 }

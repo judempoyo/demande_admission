@@ -1,9 +1,9 @@
-// screens/users_screen.dart
-import 'package:demande_admission/services/admin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:demande_admission/models/user.dart' as userModel;
-import 'base_screen.dart';
+import 'package:demande_admission/services/admin_service.dart';
+import 'package:demande_admission/screens/admin/base_screen.dart';
+import 'package:demande_admission/screens/admin/admin_user_detail_screen.dart';
 
 class UsersScreen extends StatefulWidget {
   const UsersScreen({Key? key}) : super(key: key);
@@ -13,32 +13,112 @@ class UsersScreen extends StatefulWidget {
 }
 
 class _UsersScreenState extends State<UsersScreen> {
+  String _searchQuery = '';
+  late Stream<List<userModel.User>> _usersStream;
+  List<userModel.User> _allUsers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _usersStream = _getFilteredUsers();
+  }
+
+  Stream<List<userModel.User>> _getFilteredUsers() {
+    return Provider.of<AdminService>(
+      context,
+      listen: false,
+    ).getAllUsers().map((users) => _filterUsers(users));
+  }
+
+  List<userModel.User> _filterUsers(List<userModel.User> users) {
+    if (_searchQuery.isEmpty) return users;
+
+    final query = _searchQuery.toLowerCase();
+    return users.where((user) {
+      return (user.fullName?.toLowerCase().contains(query) ?? false) ||
+          user.email.toLowerCase().contains(query) ||
+          user.role.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  void _updateStream() {
+    setState(() {
+      _usersStream = _getFilteredUsers();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final adminService = Provider.of<AdminService>(context);
-
     return BaseScreen(
       title: 'Gestion des utilisateurs',
       actions: [
-        IconButton(
-          icon: const Icon(Icons.add),
-          onPressed: () {
-            // Ajouter un nouvel utilisateur
-          },
-        ),
+        IconButton(icon: const Icon(Icons.refresh), onPressed: _updateStream),
       ],
       body: StreamBuilder<List<userModel.User>>(
-        stream: adminService.getAllUsers(),
+        stream: _usersStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Erreur: ${snapshot.error}'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Erreur de chargement',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(snapshot.error.toString(), textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _updateStream,
+                    child: const Text('Réessayer'),
+                  ),
+                ],
+              ),
+            );
           }
 
           final users = snapshot.data!;
+
+          if (users.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    _searchQuery.isEmpty
+                        ? Icons.people_outline
+                        : Icons.search_off,
+                    size: 48,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _searchQuery.isEmpty
+                        ? 'Aucun utilisateur trouvé'
+                        : 'Aucun résultat pour "$_searchQuery"',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  if (_searchQuery.isNotEmpty)
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _searchQuery = '';
+                          _updateStream();
+                        });
+                      },
+                      child: const Text('Réinitialiser la recherche'),
+                    ),
+                ],
+              ),
+            );
+          }
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
@@ -47,11 +127,17 @@ class _UsersScreenState extends State<UsersScreen> {
                 _buildSearchBar(),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: users.length,
-                    itemBuilder: (context, index) {
-                      return _UserTile(user: users[index]);
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      _updateStream();
+                      await Future.delayed(const Duration(seconds: 1));
                     },
+                    child: ListView.builder(
+                      itemCount: users.length,
+                      itemBuilder: (context, index) {
+                        return _UserTile(user: users[index]);
+                      },
+                    ),
                   ),
                 ),
               ],
@@ -67,6 +153,18 @@ class _UsersScreenState extends State<UsersScreen> {
       decoration: InputDecoration(
         hintText: 'Rechercher un utilisateur...',
         prefixIcon: const Icon(Icons.search),
+        suffixIcon:
+            _searchQuery.isNotEmpty
+                ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    setState(() {
+                      _searchQuery = '';
+                      _updateStream();
+                    });
+                  },
+                )
+                : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide.none,
@@ -75,7 +173,10 @@ class _UsersScreenState extends State<UsersScreen> {
         contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
       ),
       onChanged: (value) {
-        // Implémenter la recherche
+        setState(() {
+          _searchQuery = value;
+          _updateStream();
+        });
       },
     );
   }
@@ -91,58 +192,62 @@ class _UserTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          child: Text(
-            (user.fullName?.isNotEmpty ?? false)
-                ? user.fullName![0]
-                : user.email[0],
-          ),
-        ),
-        title: Text(user.fullName ?? user.email),
-        subtitle: Text(user.email),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Chip(
-              label: Text(user.role.toUpperCase()),
-              backgroundColor: _getRoleColor(context, user.role),
-            ),
-            const SizedBox(width: 8),
-            PopupMenuButton(
-              itemBuilder:
-                  (context) => [
-                    const PopupMenuItem(value: 'edit', child: Text('Modifier')),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Text(
-                        'Supprimer',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  ],
-              onSelected: (value) {
-                if (value == 'delete') {
-                  _showDeleteDialog(context, user.user_id);
-                }
-              },
-            ),
-          ],
-        ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
         onTap: () {
-          showDialog(
-            context: context,
-            builder:
-                (context) => UserDetailsDialog(
-                  user: user,
-                  adminService: Provider.of<AdminService>(
-                    context,
-                    listen: false,
-                  ),
-                ),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AdminUserDetailScreen(user: user),
+            ),
           );
         },
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                child: Text(
+                  (user.fullName?.isNotEmpty ?? false)
+                      ? user.fullName![0].toUpperCase()
+                      : user.email[0].toUpperCase(),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.fullName ?? user.email,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      user.email,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Chip(
+                label: Text(
+                  user.role.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _getRoleTextColor(context, user.role),
+                  ),
+                ),
+                backgroundColor: _getRoleColor(context, user.role),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -150,106 +255,22 @@ class _UserTile extends StatelessWidget {
   Color _getRoleColor(BuildContext context, String role) {
     switch (role) {
       case 'admin':
-        return Theme.of(context).colorScheme.primaryContainer;
-      default:
-        return Theme.of(context).colorScheme.surfaceVariant;
+        return Theme.of(context).colorScheme.primary.withOpacity(0.2);
+      case 'teacher':
+        return Colors.blue.withOpacity(0.2);
+      default: // student
+        return Colors.green.withOpacity(0.2);
     }
   }
 
-  void _showDeleteDialog(BuildContext context, String userId) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Confirmer la suppression'),
-            content: const Text(
-              'Voulez-vous vraiment supprimer cet utilisateur?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Annuler'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  try {
-                    await Provider.of<AdminService>(
-                      context,
-                      listen: false,
-                    ).deleteUser(userId);
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Utilisateur supprimé')),
-                    );
-                  } catch (e) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
-                  }
-                },
-                child: const Text(
-                  'Supprimer',
-                  style: TextStyle(color: Colors.red),
-                ),
-              ),
-            ],
-          ),
-    );
-  }
-}
-
-class UserDetailsDialog extends StatelessWidget {
-  final userModel.User user;
-  final AdminService adminService;
-
-  const UserDetailsDialog({
-    required this.user,
-    required this.adminService,
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    String role = user.role;
-
-    return AlertDialog(
-      title: Text('Modifier utilisateur'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: CircleAvatar(child: Text(user.email[0])),
-            title: Text(user.email),
-          ),
-          SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            value: role,
-            items: [
-              DropdownMenuItem(value: 'admin', child: Text('Administrateur')),
-              DropdownMenuItem(value: 'student', child: Text('Étudiant')),
-              DropdownMenuItem(value: 'teacher', child: Text('Enseignant')),
-            ],
-            onChanged: (value) => role = value!,
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text('Annuler'),
-        ),
-        ElevatedButton(
-          onPressed: () async {
-            await adminService.updateUserRole(
-              userId: user.user_id,
-              newRole: role,
-            );
-            Navigator.pop(context);
-          },
-          child: Text('Enregistrer'),
-        ),
-      ],
-    );
+  Color _getRoleTextColor(BuildContext context, String role) {
+    switch (role) {
+      case 'admin':
+        return Theme.of(context).colorScheme.primary;
+      case 'teacher':
+        return Colors.blue;
+      default: // student
+        return Colors.green;
+    }
   }
 }
