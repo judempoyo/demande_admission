@@ -48,6 +48,18 @@ class StorageService {
         .replaceAll(' ', '_');
   }
 
+  Future<void> deleteFiles(String bucketName, List<String> fileUrls) async {
+    try {
+      for (final url in fileUrls) {
+        // Extraire le nom du fichier de l'URL
+        final fileName = url.split('/').last;
+        await _client.storage.from(bucketName).remove([fileName]);
+      }
+    } catch (e) {
+      throw 'Erreur lors de la suppression des fichiers: $e';
+    }
+  }
+
   String? _getMimeType(String filename) {
     final extension = filename.split('.').last.toLowerCase();
     switch (extension) {
