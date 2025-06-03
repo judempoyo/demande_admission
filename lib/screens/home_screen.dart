@@ -1,4 +1,5 @@
 import 'package:demande_admission/screens/profile_tab.dart';
+import 'package:demande_admission/screens/request_detail_screen.dart';
 import 'package:demande_admission/screens/request_form_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:demande_admission/models/admission_request.dart';
@@ -310,44 +311,68 @@ class DashboardTab extends StatelessWidget {
 
         return Column(
           children:
-              requests.map((request) => _buildRequestItem(request)).toList(),
+              requests
+                  .map((request) => _buildRequestItem(context, request))
+                  .toList(),
         );
       },
     );
   }
 
-  Widget _buildRequestItem(AdmissionRequest request) {
+  Widget _buildRequestItem(BuildContext context, AdmissionRequest request) {
     return Card(
       margin: EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        contentPadding: EdgeInsets.all(16),
-        leading: Container(
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: _getStatusColor(request.status).withOpacity(0.2),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            Icons.description,
-            color: _getStatusColor(request.status),
-          ),
-        ),
-        title: Text(
-          request.program,
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(
-          'Soumis le ${DateFormat('dd/MM/yyyy').format(DateTime.parse(request.submissionDate))}',
-        ),
-        trailing: Chip(
-          backgroundColor: _getStatusColor(request.status).withOpacity(0.1),
-          label: Text(
-            request.status.toUpperCase(),
-            style: TextStyle(
-              color: _getStatusColor(request.status),
-              fontSize: 12,
+      elevation: 2,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => RequestDetailScreen(request: request),
             ),
+          );
+        },
+        splashColor: Colors.teal.withOpacity(0.1),
+        highlightColor: Colors.teal.withOpacity(0.05),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      request.program,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Soumis le ${DateFormat('dd/MM/yyyy').format(DateTime.parse(request.submissionDate))}',
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ),
+              Chip(
+                backgroundColor: _getStatusColor(
+                  request.status,
+                ).withOpacity(0.1),
+                label: Text(
+                  request.status.toUpperCase(),
+                  style: TextStyle(
+                    color: _getStatusColor(request.status),
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              Icon(Icons.chevron_right, color: Colors.grey),
+            ],
           ),
         ),
       ),

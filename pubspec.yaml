@@ -52,6 +52,7 @@ dependencies:
   provider: ^6.1.5
   supabase_auth_ui: ^0.5.5
   flutter_dotenv: ^5.2.1
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
