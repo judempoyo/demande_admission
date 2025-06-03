@@ -1,3 +1,4 @@
+import 'package:demande_admission/screens/admin/admin_profile_screen.dart';
 import 'package:demande_admission/screens/admin/dashboard_screen.dart';
 import 'package:demande_admission/screens/admin/requests_screens.dart';
 import 'package:demande_admission/screens/admin/users_screen.dart';
@@ -41,7 +42,8 @@ void main() async {
           '/dashboard': (context) => const DashboardScreen(),
           '/requests': (context) => const RequestsScreen(),
           '/users': (context) => const UsersScreen(),
-          '/profile': (context) => ProfileTab(),
+          //'/profile': (context) => ProfileTab(),
+          '/admin/profile': (context) => AdminProfileScreen(),
         },
       ),
     ),

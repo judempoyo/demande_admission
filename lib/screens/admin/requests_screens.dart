@@ -1,5 +1,6 @@
 // screens/requests_screen.dart
 import 'package:demande_admission/models/admission_request.dart';
+import 'package:demande_admission/screens/admin/admin_request_detail_screen.dart';
 import 'package:demande_admission/services/admin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +15,46 @@ class RequestsScreen extends StatefulWidget {
 
 class _RequestsScreenState extends State<RequestsScreen> {
   String _filter = 'all';
+  String _searchQuery = '';
+  late Stream<List<AdmissionRequest>> _requestsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _requestsStream = _getFilteredRequests();
+  }
+
+  Stream<List<AdmissionRequest>> _getFilteredRequests() {
+    return (_filter == 'all'
+            ? Provider.of<AdminService>(
+              context,
+              listen: false,
+            ).getAllAdmissionRequests()
+            : Provider.of<AdminService>(
+              context,
+              listen: false,
+            ).getAllAdmissionRequests(statusFilter: _filter))
+        .map((requests) => _filterRequests(requests));
+  }
+
+  List<AdmissionRequest> _filterRequests(List<AdmissionRequest> requests) {
+    if (_searchQuery.isEmpty) return requests;
+
+    final query = _searchQuery.toLowerCase();
+    return requests.where((request) {
+      return request.fullName.toLowerCase().contains(query) ||
+          request.email.toLowerCase().contains(query) ||
+          request.program.toLowerCase().contains(query) ||
+          request.status.toLowerCase().contains(query) ||
+          (request.comments?.toLowerCase().contains(query) ?? false);
+    }).toList();
+  }
+
+  void _updateStream() {
+    setState(() {
+      _requestsStream = _getFilteredRequests();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +65,10 @@ class _RequestsScreenState extends State<RequestsScreen> {
       actions: [
         PopupMenuButton<String>(
           onSelected: (value) {
-            setState(() => _filter = value);
+            setState(() {
+              _filter = value;
+              _updateStream();
+            });
           },
           itemBuilder:
               (context) => [
@@ -43,10 +87,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
         ),
       ],
       body: StreamBuilder<List<AdmissionRequest>>(
-        stream:
-            _filter == 'all'
-                ? adminService.getAllAdmissionRequests()
-                : adminService.getAllAdmissionRequests(statusFilter: _filter),
+        stream: _requestsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -93,7 +134,10 @@ class _RequestsScreenState extends State<RequestsScreen> {
         contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
       ),
       onChanged: (value) {
-        // Implémenter la recherche
+        setState(() {
+          _searchQuery = value;
+          _updateStream();
+        });
       },
     );
   }
@@ -213,17 +257,16 @@ class _RequestCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          showDialog(
-            context: context,
-            builder:
-                (context) => RequestDetailsDialog(
-                  request: request,
-                  adminService: Provider.of<AdminService>(
-                    context,
-                    listen: false,
-                  ),
-                ),
-          );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AdminRequestDetailScreen(request: request),
+            ),
+          ).then((refresh) {
+            if (refresh == true) {
+              // Rafraîchir la liste si nécessaire
+            }
+          });
         },
         child: Padding(
           padding: const EdgeInsets.all(16.0),

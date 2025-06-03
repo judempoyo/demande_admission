@@ -33,7 +33,7 @@ class _BaseScreenState extends State<BaseScreen> {
             icon: Icon(Icons.account_circle_outlined),
             onPressed: () {
               // Navigation vers le profil
-              Navigator.pushNamed(context, '/profile');
+              Navigator.pushNamed(context, '/admin/profile');
             },
           ),
           if (widget.actions != null) ...widget.actions!,
