@@ -6,6 +6,7 @@ import 'package:demande_admission/screens/auth_wrapper.dart';
 import 'package:demande_admission/screens/home_screen.dart';
 //import 'package:demande_admission/screens/profile_tab.dart';
 import 'package:demande_admission/services/admin_service.dart';
+import 'package:demande_admission/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -23,18 +24,7 @@ void main() async {
       // Utilisez MultiProvider pour gérer plusieurs providers
       providers: [ChangeNotifierProvider(create: (_) => AdminService())],
       child: MaterialApp(
-        theme: ThemeData(
-          primarySwatch: Colors.teal,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-          appBarTheme: AppBarTheme(
-            elevation: 0,
-            centerTitle: true,
-            backgroundColor: Colors.transparent,
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        ),
+        theme: appTheme,
         home: AuthWrapper(),
         //home: DashboardScreen(),
         routes: {
