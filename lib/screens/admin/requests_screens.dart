@@ -16,42 +16,24 @@ class RequestsScreen extends StatefulWidget {
 class _RequestsScreenState extends State<RequestsScreen> {
   String _filter = 'all';
   String _searchQuery = '';
-  List<AdmissionRequest> _allRequests = []; // Cache pour toutes les demandes
+  List<AdmissionRequest> _allRequests = [];
 
   @override
   Widget build(BuildContext context) {
     return BaseScreen(
       title: 'Gestion des demandes',
       actions: [
-        PopupMenuButton<String>(
-          onSelected: (value) {
-            setState(() {
-              _filter = value;
-            });
-          },
-          itemBuilder:
-              (context) => [
-                const PopupMenuItem(value: 'all', child: Text('Toutes')),
-                const PopupMenuItem(
-                  value: 'pending',
-                  child: Text('En attente'),
-                ),
-                const PopupMenuItem(
-                  value: 'approved',
-                  child: Text('Approuvées'),
-                ),
-                const PopupMenuItem(value: 'rejected', child: Text('Rejetées')),
-              ],
-          icon: const Icon(Icons.filter_list),
+        IconButton(
+          icon: const Icon(Icons.search),
+          onPressed: () => _showSearchDialog(context),
+          tooltip: 'Recherche avancée',
         ),
+        _buildFilterMenu(),
       ],
       body: StreamBuilder<List<AdmissionRequest>>(
-        stream:
-            _filter == 'all'
-                ? Provider.of<AdminService>(context).getAllAdmissionRequests()
-                : Provider.of<AdminService>(
-                  context,
-                ).getAllAdmissionRequests(statusFilter: _filter),
+        stream: Provider.of<AdminService>(context).getAllAdmissionRequests(
+          statusFilter: _filter == 'all' ? null : _filter,
+        ),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             _allRequests = snapshot.data!;
@@ -64,6 +46,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
                     final query = _searchQuery.toLowerCase();
                     return request.fullName.toLowerCase().contains(query) ||
                         request.email.toLowerCase().contains(query) ||
+                        request.domain.toLowerCase().contains(query) ||
                         request.program.toLowerCase().contains(query) ||
                         request.status.toLowerCase().contains(query) ||
                         (request.comments?.toLowerCase().contains(query) ??
@@ -76,16 +59,52 @@ class _RequestsScreenState extends State<RequestsScreen> {
     );
   }
 
+  Widget _buildFilterMenu() {
+    return PopupMenuButton<String>(
+      onSelected: (value) => setState(() => _filter = value),
+      itemBuilder:
+          (context) => const [
+            PopupMenuItem(value: 'all', child: Text('Toutes')),
+            PopupMenuItem(value: 'pending', child: Text('En attente')),
+            PopupMenuItem(value: 'approved', child: Text('Approuvées')),
+            PopupMenuItem(value: 'rejected', child: Text('Rejetées')),
+          ],
+      icon: const Icon(Icons.filter_list),
+      tooltip: 'Filtrer',
+    );
+  }
+
   Widget _buildContent(
     List<AdmissionRequest> requests,
     AsyncSnapshot snapshot,
   ) {
     if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF006D77)),
+      );
     }
 
     if (snapshot.hasError) {
-      return Center(child: Text('Erreur: ${snapshot.error}'));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              'Erreur de chargement',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(snapshot.error.toString(), textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => setState(() {}),
+              child: const Text('Réessayer'),
+            ),
+          ],
+        ),
+      );
     }
 
     if (requests.isEmpty) {
@@ -107,11 +126,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
             ),
             if (_searchQuery.isNotEmpty)
               TextButton(
-                onPressed: () {
-                  setState(() {
-                    _searchQuery = '';
-                  });
-                },
+                onPressed: () => setState(() => _searchQuery = ''),
                 child: const Text('Réinitialiser la recherche'),
               ),
           ],
@@ -119,54 +134,159 @@ class _RequestsScreenState extends State<RequestsScreen> {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          _buildSearchBar(),
-          const SizedBox(height: 16),
-          Expanded(
-            child: ListView.builder(
-              itemCount: requests.length,
-              itemBuilder: (context, index) {
-                return _RequestCard(request: requests[index]);
-              },
-            ),
-          ),
-        ],
+    return RefreshIndicator(
+      onRefresh: () async => setState(() {}),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: requests.length,
+        itemBuilder: (context, index) {
+          return _RequestCard(request: requests[index]);
+        },
       ),
     );
   }
 
-  Widget _buildSearchBar() {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: 'Rechercher une demande...',
-        prefixIcon: const Icon(Icons.search),
-        suffixIcon:
-            _searchQuery.isNotEmpty
-                ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    setState(() {
-                      _searchQuery = '';
-                    });
-                  },
-                )
-                : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide.none,
-        ),
-        filled: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-      ),
-      onChanged: (value) {
-        setState(() {
-          _searchQuery = value;
-        });
-      },
+  Future<void> _showSearchDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Recherche avancée'),
+            content: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Rechercher par nom, email, programme...',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) => setState(() => _searchQuery = value),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  setState(() => _searchQuery = '');
+                  Navigator.pop(context);
+                },
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Rechercher'),
+              ),
+            ],
+          ),
     );
+  }
+}
+
+class _RequestCard extends StatelessWidget {
+  final AdmissionRequest request;
+
+  const _RequestCard({required this.request});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _openRequestDetails(context),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      request.fullName,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Chip(
+                    label: Text(
+                      request.status.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _getStatusTextColor(request.status),
+                      ),
+                    ),
+                    backgroundColor: _getStatusColor(request.status),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                request.domain,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF006D77),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                request.program,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.calendar_today, size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    request.submissionDate.substring(0, 10),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const Spacer(),
+                  if (request.hasScholarship)
+                    const Icon(Icons.school, size: 16, color: Colors.amber),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'approved':
+        return Colors.green.withOpacity(0.2);
+      case 'rejected':
+        return Colors.red.withOpacity(0.2);
+      case 'pending':
+      default:
+        return Colors.orange.withOpacity(0.2);
+    }
+  }
+
+  Color _getStatusTextColor(String status) {
+    switch (status) {
+      case 'approved':
+        return Colors.green;
+      case 'rejected':
+        return Colors.red;
+      case 'pending':
+      default:
+        return Colors.orange;
+    }
+  }
+
+  void _openRequestDetails(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AdminRequestDetailScreen(request: request),
+      ),
+    ).then((refresh) {
+      if (refresh == true) {
+        // Rafraîchir si nécessaire
+      }
+    });
   }
 }
 
@@ -268,86 +388,5 @@ class RequestDetailsDialog extends StatelessWidget {
             ],
           ),
     );
-  }
-}
-
-class _RequestCard extends StatelessWidget {
-  final AdmissionRequest request;
-
-  const _RequestCard({required this.request});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AdminRequestDetailScreen(request: request),
-            ),
-          ).then((refresh) {
-            if (refresh == true) {
-              // Rafraîchir la liste si nécessaire
-            }
-          });
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    request.fullName,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  Chip(
-                    label: Text(
-                      request.status.toUpperCase(),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    backgroundColor: _getStatusColor(context, request.status),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                request.program,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(Icons.calendar_today, size: 16),
-                  const SizedBox(width: 4),
-                  Text(
-                    request.submissionDate,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Color _getStatusColor(BuildContext context, String status) {
-    switch (status) {
-      case 'approved':
-        return Colors.green.shade100;
-      case 'rejected':
-        return Colors.red.shade100;
-      case 'pending':
-      default:
-        return Colors.orange.shade100;
-    }
   }
 }

@@ -33,16 +33,50 @@ class _RequestFormScreenState extends State<RequestFormScreen> {
   DateTime? _birthDate;
   bool _hasScholarship = false;
   String? _selectedProgram;
+  String? _selectedDomain;
   bool _isLoading = false;
 
   // Liste des programmes disponibles
-  final List<String> _programs = [
-    'Licence Informatique',
-    'Master Finance',
-    'Doctorat Physique',
-    'Licence Droit',
-    'Master Marketing',
-  ];
+  final Map<String, List<String>> _programs = {
+    'Informatique': [
+      'Licence en Conception des systeme d\'information',
+      'Licence en Systèmes Informatiques et Réseaux',
+      'Master en Conception des systeme d\'information',
+      'Master en Systèmes Informatiques et Réseaux',
+    ],
+    'Marketing & Commerce': [
+      'Licence en Marketing Digital',
+      'Licence en Commerce International',
+      'Master en Marketing Stratégique',
+      'Master en Commerce Électronique',
+      'Master en Études Commerciales',
+    ],
+    'Logistique & Transport': [
+      'Licence en Logistique Internationale',
+      'Licence en Management des Transports',
+      'Master en Supply Chain Management',
+      'Master en Douane et Transit',
+    ],
+    'Banque & Assurances': [
+      'Licence en Banque et Finance',
+      'Licence en Assurance et Gestion des Risques',
+      'Master en Ingénierie Financière',
+      'Master en Actuariat',
+    ],
+    'Douanes & Fiscalité': [
+      'Licence en Douane et Accises',
+      'Licence en Fiscalité Internationale',
+      'Master en Droit Douanier',
+      'Master en Politique Fiscal',
+    ],
+    'Gestion des Ressources Humaines': ['Licence en GRH', 'Master en GRH'],
+    'Sciences Commerciales & Financières': [
+      'Licence en Sciences Commerciales ',
+      'Licence en Finance d\'Entreprise',
+      'Master en Audit et Contrôle de Gestion',
+      'Master en Finance Internationale',
+    ],
+  };
 
   // Types de documents requis
   final Map<String, bool> _requiredDocuments = {
@@ -70,6 +104,7 @@ class _RequestFormScreenState extends State<RequestFormScreen> {
       _birthDate = DateTime.parse(widget.request!.birthDate!);
     }
     _hasScholarship = widget.request!.hasScholarship;
+    _selectedDomain = widget.request!.domain;
     _selectedProgram = widget.request!.program;
 
     for (var key in _requiredDocuments.keys) {
@@ -297,41 +332,58 @@ class _RequestFormScreenState extends State<RequestFormScreen> {
   }
 
   Widget _buildProgramDropdown() {
-    return DropdownButtonFormField<String>(
-      decoration: InputDecoration(
-        labelText: 'Programme souhaité',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF006D77), width: 2),
-        ),
-        filled: true,
-        fillColor: Colors.grey.shade50,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
-        ),
-      ),
-      value: _selectedProgram,
-      items:
-          _programs.map((program) {
-            return DropdownMenuItem(value: program, child: Text(program));
-          }).toList(),
-      onChanged: (value) => setState(() => _selectedProgram = value),
-      validator:
-          (value) =>
-              value == null ? 'Veuillez sélectionner un programme' : null,
-      icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF006D77)),
-      borderRadius: BorderRadius.circular(12),
-      dropdownColor: Colors.white,
-      style: TextStyle(color: Colors.grey.shade800, fontSize: 16),
+    final domains = _programs.keys.toList();
+    String? selectedDomain;
+    String? selectedProgram;
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return Column(
+          children: [
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: 'Domaine d\'étude',
+                border: OutlineInputBorder(),
+              ),
+              value: selectedDomain,
+              items:
+                  domains.map((domain) {
+                    return DropdownMenuItem(value: domain, child: Text(domain));
+                  }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedDomain = value;
+                  selectedProgram = null;
+                });
+              },
+              validator:
+                  (value) => value == null ? 'Sélectionnez un domaine' : null,
+            ),
+            const SizedBox(height: 16),
+            if (selectedDomain != null)
+              DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  labelText: 'Programme',
+                  border: OutlineInputBorder(),
+                ),
+                value: selectedProgram,
+                items:
+                    _programs[selectedDomain]!.map((program) {
+                      return DropdownMenuItem(
+                        value: program,
+                        child: Text(program),
+                      );
+                    }).toList(),
+                onChanged: (value) {
+                  setState(() => selectedProgram = value);
+                },
+                validator:
+                    (value) =>
+                        value == null ? 'Sélectionnez un programme' : null,
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -666,7 +718,9 @@ class _RequestFormScreenState extends State<RequestFormScreen> {
         email: _emailController.text,
         phone: _phoneController.text,
         address: _addressController.text,
+
         birthDate: _birthDate?.toIso8601String(),
+        domain: _selectedDomain!,
         program: _selectedProgram!,
         hasScholarship: _hasScholarship,
         documents: uploadedDocs,

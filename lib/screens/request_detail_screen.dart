@@ -69,7 +69,10 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
 
                     SizedBox(height: 20),
                     _buildSectionHeader('Programme Académique'),
-                    _buildInfoRow('Programme', widget.request.program),
+                    _buildInfoRow(
+                      'Programme',
+                      '${widget.request.domain} - ${widget.request.program}',
+                    ),
                     _buildInfoRow(
                       'Bourse',
                       widget.request.hasScholarship ? 'Oui' : 'Non',

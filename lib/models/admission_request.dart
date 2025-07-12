@@ -10,6 +10,7 @@ class AdmissionRequest extends Equatable {
   final String address;
   final String? birthDate;
   final String program;
+  final String domain;
   final bool hasScholarship;
   final String status;
   final Map<String, String> documents; // {nom_fichier: url_public}
@@ -25,6 +26,7 @@ class AdmissionRequest extends Equatable {
     required this.phone,
     required this.address,
     this.birthDate,
+    required this.domain,
     required this.program,
     this.hasScholarship = false,
     this.status = 'pending',
@@ -43,6 +45,7 @@ class AdmissionRequest extends Equatable {
       phone: map['phone']?.toString() ?? '',
       address: map['address']?.toString() ?? '',
       birthDate: map['birth_date']?.toString(),
+      domain: map['domain']?.toString() ?? '',
       program: map['program']?.toString() ?? '',
       hasScholarship: map['has_scholarship'] as bool? ?? false,
       status: map['status']?.toString() ?? 'pending',
@@ -74,6 +77,7 @@ class AdmissionRequest extends Equatable {
       'phone': phone,
       'address': address,
       'birth_date': birthDate,
+      'domain': domain,
       'program': program,
       'has_scholarship': hasScholarship,
       'status': status,
@@ -97,6 +101,7 @@ class AdmissionRequest extends Equatable {
       phone: phone,
       address: address,
       birthDate: birthDate,
+      domain: domain,
       program: program,
       hasScholarship: hasScholarship,
       status: status ?? this.status,
