@@ -1,8 +1,8 @@
+import 'package:demande_admission/screens/admin/base_screen.dart';
 import 'package:demande_admission/screens/admin/users_screen.dart';
 import 'package:demande_admission/services/admin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'base_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -10,6 +10,7 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final adminService = Provider.of<AdminService>(context);
+    final theme = Theme.of(context);
 
     return BaseScreen(
       title: 'Tableau de bord',
@@ -18,25 +19,43 @@ class DashboardScreen extends StatelessWidget {
           future: adminService.getAdminStatistics(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(
+                  color: theme.colorScheme.primary,
+                ),
+              );
             }
 
             if (snapshot.hasError) {
-              return Center(child: Text('Erreur: ${snapshot.error}'));
+              return Center(
+                child: Text(
+                  'Erreur de chargement des données',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+              );
             }
 
             final stats = snapshot.data!;
 
             return Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(20.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 16),
+                  Text(
+                    'Vue d\'ensemble',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   _buildStatCards(context, stats),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 30),
                   _buildQuickActions(context),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                 ],
               ),
             );
@@ -47,68 +66,102 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildStatCards(BuildContext context, Map<String, dynamic> stats) {
+    final theme = Theme.of(context);
+    final isWideScreen = MediaQuery.of(context).size.width > 700;
+
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
+      crossAxisCount: isWideScreen ? 3 : 2,
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
-      childAspectRatio: 0.8,
+      childAspectRatio: 1.1,
       children: [
         _StatCard(
           icon: Icons.request_page,
           value: stats['totalRequests'].toString(),
           label: 'Demandes totales',
-          color: Colors.blue,
+          color: theme.colorScheme.primary,
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.primary.withOpacity(0.8),
+              theme.colorScheme.primary.withOpacity(0.6),
+            ],
+          ),
         ),
         _StatCard(
           icon: Icons.pending_actions,
           value: stats['pendingRequests'].toString(),
           label: 'En attente',
-          color: Colors.orange,
+          color: const Color(0xFFE29578),
+          gradient: const LinearGradient(
+            colors: [Color(0xFFE29578), Color(0xFFFFB4A2)],
+          ),
         ),
         _StatCard(
           icon: Icons.people,
           value: stats['totalUsers'].toString(),
           label: 'Utilisateurs',
-          color: Colors.green,
+          color: const Color(0xFF83C5BE),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF83C5BE), Color(0xFFEDF6F9)],
+          ),
         ),
       ],
     );
   }
 
   Widget _buildQuickActions(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Actions rapides',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 16),
             Wrap(
               spacing: 12,
               runSpacing: 12,
               children: [
-                ActionChip(
-                  avatar: const Icon(Icons.person_add, size: 18),
-                  label: const Text('Ajouter utilisateur'),
+                _ActionButton(
+                  icon: Icons.person_add,
+                  label: 'Ajouter utilisateur',
                   onPressed:
                       () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => UsersScreen()),
                       ),
+                  color: theme.colorScheme.primary,
                 ),
-               /*  ActionChip(
-                  avatar: const Icon(Icons.settings, size: 18),
-                  label: const Text('Paramètres'),
+                _ActionButton(
+                  icon: Icons.bar_chart,
+                  label: 'Statistiques',
                   onPressed: () {},
-                ), */
+                  color: const Color(0xFF83C5BE),
+                ),
+                _ActionButton(
+                  icon: Icons.settings,
+                  label: 'Paramètres',
+                  onPressed: () {},
+                  color: const Color(0xFFE29578),
+                ),
               ],
             ),
           ],
@@ -123,42 +176,90 @@ class _StatCard extends StatelessWidget {
   final String value;
   final String label;
   final Color color;
+  final Gradient gradient;
 
   const _StatCard({
     required this.icon,
     required this.value,
     required this.label,
     required this.color,
+    required this.gradient,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Card(
-      elevation: 1.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 48, color: color),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-            ),
-          ],
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: gradient,
         ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 32, color: Colors.white),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                value,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: Colors.white.withOpacity(0.9),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final Color color;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      icon: Icon(icon, size: 20),
+      label: Text(label),
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: color,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 2,
       ),
     );
   }
