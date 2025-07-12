@@ -20,9 +20,6 @@ class _UsersScreenState extends State<UsersScreen> {
   Widget build(BuildContext context) {
     return BaseScreen(
       title: 'Gestion des utilisateurs',
-      actions: [
-        IconButton(icon: const Icon(Icons.add), onPressed: _showAddUserDialog),
-      ],
 
       body: StreamBuilder<List<userModel.User>>(
         stream: Provider.of<AdminService>(context).getAllUsers(),

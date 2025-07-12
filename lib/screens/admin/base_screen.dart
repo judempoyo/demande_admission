@@ -39,11 +39,6 @@ class _BaseScreenState extends State<BaseScreen> {
         centerTitle: false,
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications_outlined, size: 26),
-            onPressed: () {},
-            tooltip: 'Notifications',
-          ),
-          IconButton(
             icon: Icon(Icons.account_circle_outlined, size: 26),
             onPressed: () => Navigator.pushNamed(context, '/admin/profile'),
             tooltip: 'Profil',

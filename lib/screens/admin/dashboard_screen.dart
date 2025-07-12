@@ -54,8 +54,6 @@ class DashboardScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   _buildStatCards(context, stats),
                   const SizedBox(height: 30),
-                  _buildQuickActions(context),
-                  const SizedBox(height: 20),
                 ],
               ),
             );
@@ -72,9 +70,9 @@ class DashboardScreen extends StatelessWidget {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: isWideScreen ? 3 : 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
+      crossAxisCount: isWideScreen ? 3 : 1,
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 8,
       childAspectRatio: 1.1,
       children: [
         _StatCard(
@@ -108,65 +106,6 @@ class DashboardScreen extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildQuickActions(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: theme.colorScheme.outline.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Actions rapides',
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _ActionButton(
-                  icon: Icons.person_add,
-                  label: 'Ajouter utilisateur',
-                  onPressed:
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => UsersScreen()),
-                      ),
-                  color: theme.colorScheme.primary,
-                ),
-                _ActionButton(
-                  icon: Icons.bar_chart,
-                  label: 'Statistiques',
-                  onPressed: () {},
-                  color: const Color(0xFF83C5BE),
-                ),
-                _ActionButton(
-                  icon: Icons.settings,
-                  label: 'Paramètres',
-                  onPressed: () {},
-                  color: const Color(0xFFE29578),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
