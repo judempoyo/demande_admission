@@ -36,12 +36,6 @@ class _HomeScreenState extends State<HomeScreen> {
             bottomRight: Radius.circular(30),
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: _screens[_currentIndex],
       floatingActionButton:
