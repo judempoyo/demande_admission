@@ -75,7 +75,7 @@ final ThemeData appTheme = ThemeData(
               ),
             ),
           ), */
-  cardTheme: CardTheme(
+  cardTheme: CardThemeData(
     elevation: 2,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     margin: EdgeInsets.all(8),

@@ -4,12 +4,9 @@ import 'package:demande_admission/screens/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class AuthWrapper extends StatefulWidget {
-  @override
-  _AuthWrapperState createState() => _AuthWrapperState();
-}
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({Key? key}) : super(key: key);
 
-class _AuthWrapperState extends State<AuthWrapper> {
   @override
   Widget build(BuildContext context) {
     final supabase = Supabase.instance.client;
@@ -17,30 +14,41 @@ class _AuthWrapperState extends State<AuthWrapper> {
     return StreamBuilder<AuthState>(
       stream: supabase.auth.onAuthStateChange,
       builder: (context, snapshot) {
-        // Vérifie si l'utilisateur est connecté
+        // Vérification de l'état de connexion
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
         final session = supabase.auth.currentSession;
         final user = supabase.auth.currentUser;
 
+        // Si non connecté, afficher l'écran de connexion
         if (session == null || user == null) {
           return LoginScreen();
         }
 
-        // Vérifie le rôle de l'utilisateur
+        // Si connecté, vérifier le rôle
         return FutureBuilder<Map<String, dynamic>?>(
           future: _getUserProfile(user.id),
           builder: (context, profileSnapshot) {
+            // Gestion des états de chargement
             if (profileSnapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                 body: Center(child: CircularProgressIndicator()),
               );
             }
 
+            // Gestion des erreurs ou données manquantes
             if (profileSnapshot.hasError || !profileSnapshot.hasData) {
               return HomeScreen();
             }
 
-            final isAdmin = profileSnapshot.data?['role'] == 'admin';
-            return isAdmin ? DashboardScreen() : HomeScreen();
+            final profileData = profileSnapshot.data!;
+            final isAdmin = profileData['role'] == 'admin';
+
+            return isAdmin ? const DashboardScreen() : HomeScreen();
           },
         );
       },
@@ -58,7 +66,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
       return response;
     } catch (e) {
-      debugPrint('Erreur récupération profil: $e');
+      debugPrint('Erreur lors de la récupération du profil: $e');
       return null;
     }
   }

@@ -50,11 +50,10 @@ class DashboardScreen extends StatelessWidget {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount:
-          MediaQuery.of(context).size.width > 600 ? 3 : 2, // Adaptatif
+      crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
-      childAspectRatio: 0.8, // Ajustez ce ratio selon vos besoins
+      childAspectRatio: 0.8,
       children: [
         _StatCard(
           icon: Icons.request_page,
@@ -97,11 +96,6 @@ class DashboardScreen extends StatelessWidget {
               runSpacing: 12,
               children: [
                 ActionChip(
-                  avatar: const Icon(Icons.add, size: 18),
-                  label: const Text('Nouvelle demande'),
-                  onPressed: () {},
-                ),
-                ActionChip(
                   avatar: const Icon(Icons.person_add, size: 18),
                   label: const Text('Ajouter utilisateur'),
                   onPressed:
@@ -110,11 +104,11 @@ class DashboardScreen extends StatelessWidget {
                         MaterialPageRoute(builder: (context) => UsersScreen()),
                       ),
                 ),
-                ActionChip(
+               /*  ActionChip(
                   avatar: const Icon(Icons.settings, size: 18),
                   label: const Text('Paramètres'),
                   onPressed: () {},
-                ),
+                ), */
               ],
             ),
           ],
@@ -143,11 +137,11 @@ class _StatCard extends StatelessWidget {
       elevation: 1.5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(12.0), // Réduit le padding
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 28, color: color), // Taille d'icône réduite
+            Icon(icon, size: 48, color: color),
             const SizedBox(height: 8),
             Text(
               value,
@@ -161,7 +155,7 @@ class _StatCard extends StatelessWidget {
               label,
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
-              maxLines: 2, // Limite le texte à 2 lignes
+              maxLines: 2,
             ),
           ],
         ),
